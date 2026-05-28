@@ -85,6 +85,29 @@
         </div>
       </div>
 
+      <div class="px-3 pt-3 md:px-4 md:pt-0">
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <label for="race-selector" class="text-xs uppercase tracking-[0.18em] text-slate-500">Course FFCK</label>
+          <select id="race-selector"
+            class="mt-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none focus:border-water-500">
+            <option value="20120935">Manche N1 - Épinal</option>
+            <option value="20120930">Sélections Olympiques</option>
+            <option value="20120940">N1 - Bourg Saint Maurice</option>
+          </select>
+          <div class="mt-3 flex gap-2">
+            <input id="manual-race-id" type="number" inputmode="numeric" min="1"
+              class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-water-500"
+              placeholder="ID course" />
+            <button id="load-manual-race"
+              class="rounded-lg bg-water-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-water-400"
+              title="Charger un ID manuel">
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-slate-500">Charger un ID manuel</p>
+        </div>
+      </div>
+
       <nav class="grid grid-cols-3 gap-1 p-2 md:mt-4 md:grid-cols-1 md:gap-2 md:px-4"
         aria-label="Navigation principale">
         <button
@@ -124,8 +147,8 @@
             <h2 id="page-title" class="mt-1 text-2xl font-bold tracking-tight md:text-3xl">Dashboard Athlète</h2>
           </div>
           <div class="flex flex-wrap gap-3 text-sm">
-            <span class="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-300">
-              <i class="fa-solid fa-database mr-2 text-water-400"></i>Mock API FFCK
+            <span id="api-status" class="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-300">
+              <i class="fa-solid fa-database mr-2 text-water-400"></i>API FFCK publique
             </span>
             <span class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-emerald-300">
               <i class="fa-solid fa-circle-check mr-2"></i>Mode entraînement
@@ -133,6 +156,8 @@
           </div>
         </div>
       </header>
+
+      <div id="app-message" class="hidden mx-4 mt-4 rounded-lg border px-4 py-3 text-sm md:mx-8"></div>
 
       <section id="tab-dashboard" class="tab-view space-y-6 p-4 md:p-8">
         <div class="grid gap-4 xl:grid-cols-[1fr_340px]">
@@ -274,130 +299,9 @@
   </div>
 
   <script>
-    // =========================================================================
-    // BACKEND .NET / API FFCK:
-    // Remplacer ce bloc par des réponses REST:
-    // GET /api/ffck/athletes
-    // GET /api/ffck/athletes/{id}/season-summary
-    // GET /api/ffck/athletes/{id}/runs?period=&basin=&gateType=
-    // GET /api/ffck/predictions/next-race
-    // =========================================================================
-    const mockApiPayload = {
-      athletes: [
-        {
-          id: 'lea-gauthier',
-          name: 'Léa Gauthier',
-          category: 'K1D Senior',
-          club: 'Pau Canoë-Kayak Club',
-          nation: 'FRA',
-          form: 91,
-          stats: {
-            avgBaseGap: '-0.42 s',
-            finalsRate: '78%',
-            touchRatio: '0.62',
-            missedGates: 1
-          },
-          profile: [88, 91, 84, 93],
-          top10Profile: [82, 86, 79, 88],
-          seasonScores: [
-            { label: 'N1 Épinal', score: 78 },
-            { label: 'Sélections Pau', score: 84 },
-            { label: 'Ivrea ICF', score: 81 },
-            { label: 'Bourg-Saint-Maurice', score: 89 },
-            { label: 'World Cup Prague', score: 93 },
-            { label: 'Finale Vaires', score: 91 }
-          ]
-        },
-        {
-          id: 'nolan-martin',
-          name: 'Nolan Martin',
-          category: 'K1H U23',
-          club: 'CK Val de l\'Indre',
-          nation: 'FRA',
-          form: 86,
-          stats: {
-            avgBaseGap: '+0.18 s',
-            finalsRate: '71%',
-            touchRatio: '0.78',
-            missedGates: 2
-          },
-          profile: [80, 94, 76, 89],
-          top10Profile: [78, 88, 81, 85],
-          seasonScores: [
-            { label: 'N1 Épinal', score: 73 },
-            { label: 'Sélections Pau', score: 80 },
-            { label: 'Augsburg Open', score: 84 },
-            { label: 'Bourg-Saint-Maurice', score: 82 },
-            { label: 'World Cup Prague', score: 88 },
-            { label: 'Finale Vaires', score: 86 }
-          ]
-        },
-        {
-          id: 'camille-rousseau',
-          name: 'Camille Rousseau',
-          category: 'C1D Senior',
-          club: 'Cesson Rennes CK',
-          nation: 'FRA',
-          form: 82,
-          stats: {
-            avgBaseGap: '+0.64 s',
-            finalsRate: '64%',
-            touchRatio: '0.91',
-            missedGates: 0
-          },
-          profile: [85, 79, 87, 78],
-          top10Profile: [83, 84, 82, 81],
-          seasonScores: [
-            { label: 'N1 Épinal', score: 76 },
-            { label: 'Sélections Pau', score: 79 },
-            { label: 'Ivrea ICF', score: 77 },
-            { label: 'Bourg-Saint-Maurice', score: 84 },
-            { label: 'World Cup Prague', score: 80 },
-            { label: 'Finale Vaires', score: 82 }
-          ]
-        }
-      ],
-      runs: [
-        { athleteId: 'lea-gauthier', date: '2026-03-15', race: 'N1 Épinal', run: 'Demi-finale', pureTime: '94.82', penalties: 0, baseGap: '-0.21', rank: 2, period: 'spring', basin: 'naturel', gateType: 'descente' },
-        { athleteId: 'lea-gauthier', date: '2026-04-06', race: 'Sélections Pau', run: 'Finale', pureTime: '98.41', penalties: 2, baseGap: '+0.36', rank: 3, period: 'selection', basin: 'artificiel', gateType: 'stop' },
-        { athleteId: 'lea-gauthier', date: '2026-05-10', race: 'Bourg-Saint-Maurice', run: 'Finale', pureTime: '101.03', penalties: 0, baseGap: '-0.74', rank: 1, period: 'summer', basin: 'naturel', gateType: 'descente' },
-        { athleteId: 'lea-gauthier', date: '2026-06-18', race: 'World Cup Prague', run: 'Qualification 2', pureTime: '95.18', penalties: 2, baseGap: '+0.08', rank: 5, period: 'summer', basin: 'artificiel', gateType: 'stop' },
-        { athleteId: 'lea-gauthier', date: '2026-07-02', race: 'Finale Vaires', run: 'Finale', pureTime: '96.24', penalties: 50, baseGap: '+51.12', rank: 18, period: 'summer', basin: 'artificiel', gateType: 'descente' },
-        { athleteId: 'nolan-martin', date: '2026-03-16', race: 'N1 Épinal', run: 'Finale', pureTime: '91.67', penalties: 2, baseGap: '+0.88', rank: 4, period: 'spring', basin: 'naturel', gateType: 'descente' },
-        { athleteId: 'nolan-martin', date: '2026-04-07', race: 'Sélections Pau', run: 'Finale', pureTime: '92.11', penalties: 0, baseGap: '-0.12', rank: 2, period: 'selection', basin: 'artificiel', gateType: 'stop' },
-        { athleteId: 'nolan-martin', date: '2026-06-19', race: 'World Cup Prague', run: 'Demi-finale', pureTime: '93.75', penalties: 4, baseGap: '+1.92', rank: 9, period: 'summer', basin: 'artificiel', gateType: 'stop' },
-        { athleteId: 'camille-rousseau', date: '2026-04-06', race: 'Sélections Pau', run: 'Demi-finale', pureTime: '107.44', penalties: 0, baseGap: '+0.41', rank: 6, period: 'selection', basin: 'artificiel', gateType: 'stop' },
-        { athleteId: 'camille-rousseau', date: '2026-05-11', race: 'Bourg-Saint-Maurice', run: 'Finale', pureTime: '110.19', penalties: 2, baseGap: '+0.95', rank: 4, period: 'summer', basin: 'naturel', gateType: 'descente' },
-        { athleteId: 'camille-rousseau', date: '2026-07-03', race: 'Finale Vaires', run: 'Finale', pureTime: '106.83', penalties: 0, baseGap: '-0.18', rank: 2, period: 'summer', basin: 'artificiel', gateType: 'descente' }
-      ],
-      predictions: [
-        { athlete: 'Nolan Martin', category: 'K1H U23', odds: 1.50, votes: 42, signal: 'Meilleur temps pur sur 3 des 5 dernières manches' },
-        { athlete: 'Théo Bernard', category: 'K1H Senior', odds: 2.10, votes: 28, signal: 'Très propre sur stops, 0 porte manquée cette saison' },
-        { athlete: 'Malo Kerbrat', category: 'K1H Senior', odds: 3.20, votes: 18, signal: 'Fort engagement, risque pénalité 2s élevé' },
-        { athlete: 'Hugo Delmas', category: 'K1H U23', odds: 5.80, votes: 12, signal: 'Outsider performant sur bassin artificiel' }
-      ]
-    };
-
-    // Fonction pour charger une vraie course depuis la FFCK
-    async function chargerCourseFFCK(raceId) {
-      try {
-        const response = await fetch(`https://slalom.ffck.org/api/ffck/race/${raceId}`);
-        const data = await response.json();
-
-        console.log("Vraies données FFCK reçues :", data);
-
-        // C'est ici que tu lieras les données reçues (data.results) 
-        // aux fonctions graphiques du site (renderAthlete, etc.)
-
-      } catch (error) {
-        console.error("Impossible de charger la course FFCK :", error);
-      }
-    }
-
-    // Exemple d'appel pour la course d'Épinal au démarrage
-    // chargerCourseFFCK(20120935);
-
-    let selectedAthlete = mockApiPayload.athletes[0];
+    let currentRaceResults = [];
+    let currentRaceData = null;
+    let selectedAthlete = null;
     let seasonChart;
     let radarChart;
 
@@ -413,30 +317,107 @@
       formScore: document.getElementById('form-score'),
       runsTable: document.getElementById('runs-table'),
       runCount: document.getElementById('run-count'),
-      oddsList: document.getElementById('odds-list')
+      oddsList: document.getElementById('odds-list'),
+      raceSelector: document.getElementById('race-selector'),
+      manualRaceId: document.getElementById('manual-race-id'),
+      loadManualRace: document.getElementById('load-manual-race'),
+      appMessage: document.getElementById('app-message'),
+      apiStatus: document.getElementById('api-status')
     };
 
     function init() {
-      hydrateAthleteSearch();
-      renderAthlete(selectedAthlete);
-      renderRuns();
-      renderPredictions();
       bindNavigation();
       bindFilters();
       bindAthleteSearch();
+      bindRaceControls();
+      renderEmptyState('Chargement de la course FFCK...');
+      loadRace(elements.raceSelector?.value ?? '20120935');
+    }
+
+    async function loadRace(raceId) {
+      const cleanRaceId = String(raceId ?? '').trim();
+      if (!cleanRaceId) {
+        showMessage('error', 'Saisis un ID de course FFCK valide.');
+        return;
+      }
+
+      setLoadingState(true, cleanRaceId);
+      hideMessage();
+
+      try {
+        const response = await fetch(`https://slalom.ffck.org/api/ffck/race/${encodeURIComponent(cleanRaceId)}`);
+        if (!response.ok) {
+          throw new Error(`Course introuvable ou API indisponible (HTTP ${response.status}).`);
+        }
+
+        const data = await response.json();
+        const results = Array.isArray(data?.results) ? data.results : [];
+
+        if (!results.length) {
+          throw new Error('La course a été chargée, mais aucun résultat exploitable n\'a été trouvé dans data.results.');
+        }
+
+        currentRaceData = data ?? {};
+        currentRaceResults = results;
+        selectedAthlete = currentRaceResults[0] ?? null;
+
+        hydrateAthleteSearch();
+        elements.search.value = getAthleteName(selectedAthlete);
+        renderAthlete(selectedAthlete);
+        renderRuns();
+        renderPredictions();
+        updateRaceSummary();
+        showMessage('success', `${currentRaceResults.length} résultats FFCK chargés pour ${getRaceName()}.`);
+      } catch (error) {
+        currentRaceData = null;
+        currentRaceResults = [];
+        selectedAthlete = null;
+        hydrateAthleteSearch();
+        renderEmptyState('Aucune donnée FFCK disponible.');
+        renderRuns();
+        renderPredictions();
+        showMessage('error', error?.message ?? 'Impossible de charger la course FFCK.');
+      } finally {
+        setLoadingState(false, cleanRaceId);
+      }
+    }
+
+    function bindRaceControls() {
+      elements.raceSelector?.addEventListener('change', event => {
+        loadRace(event?.target?.value);
+      });
+
+      elements.loadManualRace?.addEventListener('click', () => {
+        const manualId = elements.manualRaceId?.value;
+        if (manualId) {
+          elements.raceSelector.value = '';
+          loadRace(manualId);
+        }
+      });
+
+      elements.manualRaceId?.addEventListener('keydown', event => {
+        if (event?.key === 'Enter') {
+          elements.loadManualRace?.click();
+        }
+      });
     }
 
     function hydrateAthleteSearch() {
-      elements.datalist.innerHTML = mockApiPayload.athletes
-        .map(athlete => `<option value="${athlete.name}">${athlete.category} - ${athlete.club}</option>`)
+      const uniqueNames = [...new Map(currentRaceResults.map(result => [getAthleteName(result), result])).values()];
+      elements.datalist.innerHTML = uniqueNames
+        .filter(result => getAthleteName(result) !== 'Athlète inconnu')
+        .map(result => `<option value="${escapeHtml(getAthleteName(result))}">${escapeHtml(getBoatCategory(result))} - rang ${result?.rank ?? 'NC'}</option>`)
         .join('');
-      elements.search.value = selectedAthlete.name;
     }
 
     function bindAthleteSearch() {
       elements.search.addEventListener('change', () => {
-        const match = mockApiPayload.athletes.find(athlete => athlete.name.toLowerCase() === elements.search.value.toLowerCase());
-        if (!match) return;
+        const query = elements.search?.value?.toLowerCase()?.trim() ?? '';
+        const match = currentRaceResults.find(result => getAthleteName(result).toLowerCase() === query);
+        if (!match) {
+          showMessage('error', 'Athlète introuvable dans les résultats de cette course.');
+          return;
+        }
         selectedAthlete = match;
         renderAthlete(selectedAthlete);
         renderRuns();
@@ -476,12 +457,24 @@
       document.getElementById('apply-filters').addEventListener('click', renderRuns);
     }
 
-    function renderAthlete(athlete) {
-      elements.formScore.textContent = athlete.form;
+    function renderAthlete(result) {
+      if (!result) {
+        renderEmptyState('Sélectionne une course FFCK pour afficher un athlète.');
+        return;
+      }
+
+      const score = toNumber(result?.score);
+      const points = toNumber(result?.points);
+      const rank = result?.rank ?? 'NC';
+      const firstRunPenalties = result?.runs?.[0]?.penalties ?? null;
+      const penaltySummary = summarizePenalties(firstRunPenalties);
+      const formScore = buildFormScore(result);
+
+      elements.formScore.textContent = formScore;
       elements.profile.innerHTML = [
-        { label: 'Catégorie', value: athlete.category, icon: 'fa-id-badge' },
-        { label: 'Club', value: athlete.club, icon: 'fa-flag' },
-        { label: 'Nation', value: athlete.nation, icon: 'fa-location-crosshairs' }
+        { label: 'Athlète', value: getAthleteName(result), icon: 'fa-user' },
+        { label: 'Catégorie bateau', value: getBoatCategory(result), icon: 'fa-id-badge' },
+        { label: 'Course', value: getRaceName(), icon: 'fa-flag-checkered' }
       ].map(item => `
         <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
           <i class="fa-solid ${item.icon} text-water-400"></i>
@@ -491,10 +484,10 @@
       `).join('');
 
       const statDefinitions = [
-        { label: 'Écart moyen au temps de base', value: athlete.stats.avgBaseGap, icon: 'fa-stopwatch', color: athlete.stats.avgBaseGap.startsWith('-') ? 'text-emerald-400' : 'text-slate-100', hint: 'Moyenne sur manches validées' },
-        { label: 'Finales atteintes', value: athlete.stats.finalsRate, icon: 'fa-trophy', color: 'text-water-400', hint: 'Ratio finales / départs' },
-        { label: 'Touches 2s par manche', value: athlete.stats.touchRatio, icon: 'fa-hand', color: 'text-orange-400', hint: 'Pénalités de contact' },
-        { label: '50 portes manquées', value: athlete.stats.missedGates, icon: 'fa-triangle-exclamation', color: athlete.stats.missedGates > 0 ? 'text-red-400' : 'text-emerald-400', hint: 'Saison en cours' }
+        { label: 'Score de la manche', value: formatMetric(score, ''), icon: 'fa-stopwatch', color: 'text-water-400', hint: 'Clé FFCK: result.score' },
+        { label: 'Points FFCK obtenus', value: formatMetric(points, ' pts'), icon: 'fa-chart-line', color: 'text-emerald-400', hint: 'Clé FFCK: result.points' },
+        { label: 'Pénalités manche 1', value: penaltySummary.label, icon: 'fa-hand', color: penaltySummary.color, hint: 'Lecture sécurisée: result.runs?.[0]?.penalties' },
+        { label: 'Classement de la manche', value: `#${rank}`, icon: 'fa-ranking-star', color: rank <= 3 ? 'text-emerald-400' : 'text-slate-100', hint: 'Clé FFCK: result.rank' }
       ];
 
       elements.statCards.innerHTML = statDefinitions.map(stat => `
@@ -512,20 +505,24 @@
         </article>
       `).join('');
 
-      renderSeasonChart(athlete);
-      renderRadarChart(athlete);
+      renderSeasonChart(result);
+      renderRadarChart(result);
     }
 
-    function renderSeasonChart(athlete) {
+    function renderSeasonChart(result) {
       const ctx = document.getElementById('seasonChart');
       seasonChart?.destroy();
+      const runs = Array.isArray(result?.runs) ? result.runs : [];
+      const labels = runs.length ? runs.map((run, index) => getRunLabel(run, index)) : [getAthleteName(result)];
+      const data = runs.length ? runs.map(run => toNumber(run?.score ?? run?.time ?? run?.timeRaw ?? result?.score)) : [toNumber(result?.score)];
+
       seasonChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: athlete.seasonScores.map(point => point.label),
+          labels,
           datasets: [{
             label: 'Score',
-            data: athlete.seasonScores.map(point => point.score),
+            data,
             borderColor: '#38bdf8',
             backgroundColor: 'rgba(56, 189, 248, 0.16)',
             borderWidth: 3,
@@ -553,8 +550,7 @@
           },
           scales: {
             y: {
-              min: 60,
-              max: 100,
+              beginAtZero: false,
               grid: { color: chartGridColor },
               ticks: { color: chartTickColor }
             },
@@ -567,25 +563,27 @@
       });
     }
 
-    function renderRadarChart(athlete) {
+    function renderRadarChart(result) {
       const ctx = document.getElementById('radarChart');
       radarChart?.destroy();
+      const profile = buildTechnicalProfile(result);
+      const benchmark = buildTopBenchmark();
       radarChart = new Chart(ctx, {
         type: 'radar',
         data: {
           labels: ['Régularité', 'Vitesse pure', 'Propreté', 'Engagement'],
           datasets: [
             {
-              label: athlete.name,
-              data: athlete.profile,
+              label: getAthleteName(result),
+              data: profile,
               borderColor: '#38bdf8',
               backgroundColor: 'rgba(56, 189, 248, 0.20)',
               pointBackgroundColor: '#38bdf8',
               borderWidth: 2
             },
             {
-              label: `Moyenne Top 10 ${athlete.category}`,
-              data: athlete.top10Profile,
+              label: `Moyenne Top 10 ${getBoatCategory(result)}`,
+              data: benchmark,
               borderColor: '#a78bfa',
               backgroundColor: 'rgba(167, 139, 250, 0.12)',
               pointBackgroundColor: '#a78bfa',
@@ -616,36 +614,47 @@
     }
 
     function renderRuns() {
+      if (!selectedAthlete) {
+        elements.runCount.textContent = '0 manche';
+        elements.runsTable.innerHTML = `
+          <tr>
+            <td colspan="7" class="rounded-lg bg-slate-950/70 px-3 py-8 text-center text-slate-400">Charge une course FFCK pour afficher les manches.</td>
+          </tr>
+        `;
+        return;
+      }
+
       const period = document.getElementById('filter-period').value;
       const basin = document.getElementById('filter-basin').value;
       const gate = document.getElementById('filter-gate').value;
 
-      // BACKEND .NET / API FFCK:
-      // Remplacer ce filtrage local par:
-      // fetch(`/api/ffck/athletes/${selectedAthlete.id}/runs?period=${period}&basin=${basin}&gateType=${gate}`)
-      const rows = mockApiPayload.runs.filter(run => {
-        return run.athleteId === selectedAthlete.id
-          && (period === 'complete' || run.period === period)
-          && (basin === 'all' || run.basin === basin)
-          && (gate === 'all' || run.gateType === gate);
+      const rows = (Array.isArray(selectedAthlete?.runs) ? selectedAthlete.runs : []).filter(run => {
+        const runPeriod = run?.period ?? run?.phase ?? run?.round ?? 'complete';
+        const runBasin = run?.basinType ?? currentRaceData?.race?.basinType ?? currentRaceData?.race?.basin?.type ?? 'all';
+        const runGate = run?.gateType ?? run?.gate?.type ?? 'all';
+        return (period === 'complete' || String(runPeriod).toLowerCase().includes(period))
+          && (basin === 'all' || String(runBasin).toLowerCase().includes(basin))
+          && (gate === 'all' || String(runGate).toLowerCase().includes(gate));
       });
 
       elements.runCount.textContent = `${rows.length} manche${rows.length > 1 ? 's' : ''}`;
-      elements.runsTable.innerHTML = rows.map(run => {
-        const penaltyClass = run.penalties >= 50 ? 'text-red-400 bg-red-500/10' : run.penalties > 0 ? 'text-orange-300 bg-orange-500/10' : 'text-emerald-300 bg-emerald-500/10';
-        const gapClass = run.baseGap.startsWith('-') ? 'text-emerald-300' : run.penalties >= 50 ? 'text-red-300' : 'text-slate-200';
+      elements.runsTable.innerHTML = rows.map((run, index) => {
+        const penalties = summarizePenalties(run?.penalties ?? run?.penalty ?? 0);
+        const pureTime = run?.time ?? run?.pureTime ?? run?.timeRaw ?? selectedAthlete?.score ?? 'NC';
+        const baseGap = run?.baseGap ?? run?.gap ?? computeBaseGap(toNumber(pureTime));
+        const rank = run?.rank ?? selectedAthlete?.rank ?? 'NC';
         return `
           <tr class="bg-slate-950/70">
-            <td class="rounded-l-lg px-3 py-3 text-slate-300">${formatDate(run.date)}</td>
-            <td class="px-3 py-3 font-medium">${run.race}</td>
-            <td class="px-3 py-3 text-slate-300">${run.run}</td>
-            <td class="px-3 py-3 font-mono">${run.pureTime} s</td>
+            <td class="rounded-l-lg px-3 py-3 text-slate-300">${formatDate(run?.date ?? currentRaceData?.race?.raceDate ?? currentRaceData?.race?.date ?? currentRaceData?.raceDate)}</td>
+            <td class="px-3 py-3 font-medium">${escapeHtml(getRaceName())}</td>
+            <td class="px-3 py-3 text-slate-300">${escapeHtml(getRunLabel(run, index))}</td>
+            <td class="px-3 py-3 font-mono">${formatMetric(toNumber(pureTime), ' s')}</td>
             <td class="px-3 py-3">
-              <span class="rounded-md px-2 py-1 text-xs font-semibold ${penaltyClass}">${run.penalties} s</span>
+              <span class="rounded-md px-2 py-1 text-xs font-semibold ${penalties.color.replace('text-', 'text-')} ${penalties.bg}">${penalties.label}</span>
             </td>
-            <td class="px-3 py-3 font-mono ${gapClass}">${run.baseGap} s</td>
+            <td class="px-3 py-3 font-mono ${String(baseGap).startsWith('-') ? 'text-emerald-300' : 'text-slate-200'}">${formatBaseGap(baseGap)}</td>
             <td class="rounded-r-lg px-3 py-3">
-              <span class="rounded-md bg-slate-800 px-2 py-1 font-semibold">#${run.rank}</span>
+              <span class="rounded-md bg-slate-800 px-2 py-1 font-semibold">#${rank}</span>
             </td>
           </tr>
         `;
@@ -657,20 +666,29 @@
     }
 
     function renderPredictions() {
-      // BACKEND .NET / API FFCK:
-      // Remplacer mockApiPayload.predictions par GET /api/ffck/predictions/next-race
-      elements.oddsList.innerHTML = mockApiPayload.predictions.map((pick, index) => `
+      const picks = buildBookmakerPicks();
+
+      if (!picks.length) {
+        elements.oddsList.innerHTML = `
+          <div class="rounded-lg border border-slate-800 bg-panel/85 p-6 text-slate-400 lg:col-span-2">
+            Charge une course FFCK avec des points exploitables pour générer le Top 5 des favoris.
+          </div>
+        `;
+        return;
+      }
+
+      elements.oddsList.innerHTML = picks.map((pick, index) => `
         <article class="rounded-lg border border-slate-800 bg-panel/85 p-5">
           <div class="flex items-start justify-between gap-4">
             <div>
               <div class="flex items-center gap-3">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-950 text-sm font-bold text-water-400 ring-1 ring-slate-800">${index + 1}</span>
                 <div>
-                  <h4 class="text-lg font-semibold">${pick.athlete}</h4>
-                  <p class="text-sm text-slate-400">${pick.category}</p>
+                  <h4 class="text-lg font-semibold">${escapeHtml(pick.athlete)}</h4>
+                  <p class="text-sm text-slate-400">${escapeHtml(pick.category)}</p>
                 </div>
               </div>
-              <p class="mt-4 text-sm text-slate-400">${pick.signal}</p>
+              <p class="mt-4 text-sm text-slate-400">${escapeHtml(pick.signal)}</p>
             </div>
             <div class="text-right">
               <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Cote</p>
@@ -704,8 +722,241 @@
       });
     }
 
+    function buildBookmakerPicks() {
+      const sorted = [...currentRaceResults]
+        .filter(result => Number.isFinite(toNumber(result?.points)))
+        .sort((a, b) => toNumber(a?.points) - toNumber(b?.points))
+        .slice(0, 5);
+
+      const baseTime = getRaceBaseMetric(sorted);
+      const voteTotalWeight = sorted.reduce((sum, result) => sum + 1 / Math.max(toNumber(result?.points), 1), 0) || 1;
+
+      return sorted.map(result => {
+        const points = toNumber(result?.points);
+        const formFactor = 0.92 + Math.random() * 0.18;
+        const odds = Math.max(1.15, (points / Math.max(baseTime, 1)) * formFactor).toFixed(2);
+        const voteWeight = 1 / Math.max(points, 1);
+        const votes = Math.max(8, Math.round((voteWeight / voteTotalWeight) * 100));
+        return {
+          athlete: getAthleteName(result),
+          category: getBoatCategory(result),
+          odds: Number(odds),
+          votes,
+          signal: `Points FFCK: ${formatMetric(points, ' pts')} | Score: ${formatMetric(toNumber(result?.score), '')} | Rang #${result?.rank ?? 'NC'}`
+        };
+      });
+    }
+
+    function buildTechnicalProfile(result) {
+      const runs = Array.isArray(result?.runs) ? result.runs : [];
+      const points = toNumber(result?.points);
+      const rank = toNumber(result?.rank);
+      const score = toNumber(result?.score);
+      const penaltyTotal = runs.reduce((sum, run) => sum + summarizePenalties(run?.penalties ?? 0).total, 0);
+
+      return [
+        clamp(100 - (rank * 2), 50, 100),
+        clamp(100 - (points / 2), 50, 100),
+        clamp(100 - penaltyTotal, 50, 100),
+        clamp(70 + (score / 5), 50, 100)
+      ];
+    }
+
+    function buildTopBenchmark() {
+      const top = [...currentRaceResults]
+        .filter(result => Number.isFinite(toNumber(result?.points)))
+        .sort((a, b) => toNumber(a?.points) - toNumber(b?.points))
+        .slice(0, 10);
+
+      if (!top.length) return [75, 75, 75, 75];
+      const totals = top.reduce((acc, result) => {
+        buildTechnicalProfile(result).forEach((value, index) => {
+          acc[index] += value;
+        });
+        return acc;
+      }, [0, 0, 0, 0]);
+
+      return totals.map(value => Math.round(value / top.length));
+    }
+
+    function renderEmptyState(message) {
+      elements.formScore.textContent = '--';
+      elements.profile.innerHTML = `
+        <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-4 sm:col-span-3">
+          <i class="fa-solid fa-circle-info text-water-400"></i>
+          <p class="mt-3 text-sm text-slate-300">${escapeHtml(message)}</p>
+        </div>
+      `;
+      elements.statCards.innerHTML = ['Score de la manche', 'Points FFCK obtenus', 'Pénalités manche 1', 'Classement de la manche'].map(label => `
+        <article class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+          <p class="text-sm text-slate-400">${label}</p>
+          <p class="mt-3 text-3xl font-bold text-slate-500">--</p>
+          <p class="mt-2 text-xs text-slate-500">En attente des données FFCK</p>
+        </article>
+      `).join('');
+      renderSeasonChart(null);
+      renderRadarChart(null);
+    }
+
+    function updateRaceSummary() {
+      const card = document.querySelector('aside .hidden.px-6.pt-6.md\\:block .rounded-lg');
+      if (!card) return;
+      card.innerHTML = `
+        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Course cible</p>
+        <p class="mt-2 font-semibold">${escapeHtml(getRaceName())}</p>
+        <p class="mt-1 text-sm text-slate-400">${currentRaceResults.length} résultats chargés</p>
+      `;
+    }
+
+    function getRaceName() {
+      return currentRaceData?.race?.raceName
+        ?? currentRaceData?.race?.name
+        ?? currentRaceData?.name
+        ?? currentRaceData?.label
+        ?? 'Course inconnue';
+    }
+
+    function getAthleteName(result) {
+      return result?.boat?.label
+        ?? result?.boat?.name
+        ?? result?.athlete?.label
+        ?? result?.athlete?.name
+        ?? result?.competitor?.name
+        ?? 'Athlète inconnu';
+    }
+
+    function getBoatCategory(result) {
+      const boatType = result?.boatType ?? result?.boat?.type ?? result?.boatClass ?? '';
+      const category = result?.category?.label ?? result?.category ?? '';
+      if (boatType || category) return `${boatType} ${category}`.trim();
+      return result?.boat?.category?.label
+        ?? result?.category?.label
+        ?? result?.category
+        ?? result?.boat?.type
+        ?? result?.boatClass
+        ?? 'Catégorie inconnue';
+    }
+
+    function getRunLabel(run, index) {
+      return run?.label
+        ?? run?.name
+        ?? run?.round
+        ?? run?.phase
+        ?? run?.type
+        ?? `Manche ${index + 1}`;
+    }
+
+    function summarizePenalties(penalties) {
+      if (Array.isArray(penalties)) {
+        const total = penalties.reduce((sum, item) => sum + toNumber(item?.value ?? item?.seconds ?? item?.penalty ?? item), 0);
+        const touches = penalties.filter(item => toNumber(item?.value ?? item?.seconds ?? item?.penalty ?? item) === 2).length;
+        const missed = penalties.filter(item => toNumber(item?.value ?? item?.seconds ?? item?.penalty ?? item) >= 50).length;
+        return penaltyPresentation(total, touches, missed);
+      }
+
+      if (typeof penalties === 'object' && penalties !== null) {
+        const total = toNumber(penalties?.total ?? penalties?.value ?? penalties?.seconds ?? 0);
+        const touches = toNumber(penalties?.touches ?? penalties?.penalty2 ?? penalties?.twoSeconds ?? 0);
+        const missed = toNumber(penalties?.missed ?? penalties?.penalty50 ?? penalties?.fiftySeconds ?? 0);
+        return penaltyPresentation(total, touches, missed);
+      }
+
+      const total = toNumber(penalties ?? 0);
+      const missed = total >= 50 ? Math.floor(total / 50) : 0;
+      const touches = total >= 50 ? Math.floor((total % 50) / 2) : Math.floor(total / 2);
+      return penaltyPresentation(total, touches, missed);
+    }
+
+    function penaltyPresentation(total, touches, missed) {
+      const color = missed > 0 ? 'text-red-400' : touches > 0 || total > 0 ? 'text-orange-400' : 'text-emerald-400';
+      const bg = missed > 0 ? 'bg-red-500/10' : touches > 0 || total > 0 ? 'bg-orange-500/10' : 'bg-emerald-500/10';
+      const detail = missed > 0 ? `${missed} x 50` : touches > 0 ? `${touches} x 2` : '0 touche';
+      return { total, touches, missed, label: `${total} s (${detail})`, color, bg };
+    }
+
+    function getRaceBaseMetric(results) {
+      const raceBase = toNumber(currentRaceData?.race?.baseTime ?? currentRaceData?.race?.baseScore ?? currentRaceData?.baseTime);
+      if (Number.isFinite(raceBase) && raceBase > 0) return raceBase;
+      const scores = (results?.length ? results : currentRaceResults)
+        .map(result => toNumber(result?.score ?? result?.points))
+        .filter(value => Number.isFinite(value) && value > 0);
+      return Math.min(...scores, 100);
+    }
+
+    function computeBaseGap(value) {
+      const base = getRaceBaseMetric();
+      if (!Number.isFinite(value) || !Number.isFinite(base)) return 'NC';
+      const gap = value - base;
+      return `${gap >= 0 ? '+' : ''}${gap.toFixed(2)}`;
+    }
+
+    function buildFormScore(result) {
+      const points = toNumber(result?.points);
+      const rank = toNumber(result?.rank);
+      if (!Number.isFinite(points) && !Number.isFinite(rank)) return '--';
+      return Math.round(clamp(100 - (points / 2) - (rank * 0.8), 1, 99));
+    }
+
+    function showMessage(type, text) {
+      const isError = type === 'error';
+      elements.appMessage.className = `mx-4 mt-4 rounded-lg border px-4 py-3 text-sm md:mx-8 ${isError ? 'border-red-500/40 bg-red-500/10 text-red-200' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'}`;
+      elements.appMessage.textContent = text;
+      elements.appMessage.classList.remove('hidden');
+    }
+
+    function hideMessage() {
+      elements.appMessage.classList.add('hidden');
+      elements.appMessage.textContent = '';
+    }
+
+    function setLoadingState(isLoading, raceId) {
+      elements.apiStatus.innerHTML = isLoading
+        ? `<i class="fa-solid fa-circle-notch fa-spin mr-2 text-water-400"></i>Chargement FFCK #${escapeHtml(raceId)}`
+        : `<i class="fa-solid fa-database mr-2 text-water-400"></i>API FFCK publique`;
+      elements.raceSelector.disabled = isLoading;
+      elements.manualRaceId.disabled = isLoading;
+      elements.loadManualRace.disabled = isLoading;
+    }
+
     function formatDate(isoDate) {
-      return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(isoDate));
+      const date = new Date(isoDate ?? '');
+      if (Number.isNaN(date.getTime())) return 'Date NC';
+      return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+    }
+
+    function formatMetric(value, suffix) {
+      if (!Number.isFinite(value)) return 'NC';
+      return `${value.toFixed(2).replace('.', ',')}${suffix}`;
+    }
+
+    function formatBaseGap(value) {
+      if (value === 'NC' || value === null || value === undefined) return 'NC';
+      const numeric = toNumber(value);
+      if (!Number.isFinite(numeric)) return String(value);
+      return `${numeric >= 0 ? '+' : ''}${numeric.toFixed(2).replace('.', ',')} s`;
+    }
+
+    function toNumber(value) {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = Number(value.replace(',', '.').replace(/[^\d.-]/g, ''));
+        return Number.isFinite(parsed) ? parsed : NaN;
+      }
+      return NaN;
+    }
+
+    function clamp(value, min, max) {
+      if (!Number.isFinite(value)) return min;
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     init();
