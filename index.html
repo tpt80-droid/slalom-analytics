@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kayak Slalom Performance Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Arial']
+          },
+          colors: {
+            water: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7'
+            },
+            panel: '#111827',
+            panelSoft: '#182235'
+          },
+          boxShadow: {
+            glow: '0 0 30px rgba(14, 165, 233, 0.15)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      background:
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 30%),
+        linear-gradient(135deg, #020617 0%, #0f172a 48%, #111827 100%);
+    }
+    .chart-box { height: 340px; }
+    @media (max-width: 768px) {
+      .chart-box { height: 290px; }
+    }
+    .thin-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 antialiased">
+  <div class="flex min-h-screen">
+    <aside class="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur md:sticky md:top-0 md:h-screen md:w-72 md:border-r md:border-t-0">
+      <div class="hidden p-6 md:block">
+        <div class="flex items-center gap-3">
+          <div class="grid h-11 w-11 place-items-center rounded-lg bg-water-500/15 text-water-400 ring-1 ring-water-500/30">
+            <i class="fa-solid fa-water text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm uppercase tracking-[0.22em] text-slate-500">FFCK Lab</p>
+            <h1 class="text-lg font-semibold">Slalom Analytics</h1>
+          </div>
+        </div>
+      </div>
+
+      <nav class="grid grid-cols-3 gap-1 p-2 md:mt-4 md:grid-cols-1 md:gap-2 md:px-4" aria-label="Navigation principale">
+        <button class="nav-btn active flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800/80 md:justify-start" data-tab="dashboard">
+          <i class="fa-solid fa-gauge-high w-5 text-water-400"></i>
+          <span class="hidden sm:inline">Dashboard</span>
+        </button>
+        <button class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start" data-tab="technique">
+          <i class="fa-solid fa-sliders w-5 text-slate-400"></i>
+          <span class="hidden sm:inline">Technique</span>
+        </button>
+        <button class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start" data-tab="pronostics">
+          <i class="fa-solid fa-ranking-star w-5 text-slate-400"></i>
+          <span class="hidden sm:inline">Pronostics</span>
+        </button>
+      </nav>
+
+      <div class="hidden px-6 pt-6 md:block">
+        <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+          <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Course cible</p>
+          <p class="mt-2 font-semibold">World Cup Prague</p>
+          <p class="mt-1 text-sm text-slate-400">K1H, canal artificiel, 24 portes</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="w-full pb-24 md:pb-0">
+      <header class="border-b border-slate-800 bg-slate-950/30 px-4 py-4 backdrop-blur md:px-8">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-water-400">Kayak Slalom Performance</p>
+            <h2 id="page-title" class="mt-1 text-2xl font-bold tracking-tight md:text-3xl">Dashboard Athlète</h2>
+          </div>
+          <div class="flex flex-wrap gap-3 text-sm">
+            <span class="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-slate-300">
+              <i class="fa-solid fa-database mr-2 text-water-400"></i>Mock API FFCK
+            </span>
+            <span class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-emerald-300">
+              <i class="fa-solid fa-circle-check mr-2"></i>Mode entraînement
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <section id="tab-dashboard" class="tab-view space-y-6 p-4 md:p-8">
+        <div class="grid gap-4 xl:grid-cols-[1fr_340px]">
+          <div class="rounded-lg border border-slate-800 bg-panel/85 p-5 shadow-glow">
+            <label for="athlete-search" class="text-sm font-medium text-slate-300">Sélecteur d'athlète</label>
+            <div class="relative mt-3">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input id="athlete-search" list="athlete-list" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-11 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-water-500 focus:ring-2 focus:ring-water-500/20" placeholder="Rechercher un athlète, ex: Léa Gauthier" />
+              <datalist id="athlete-list"></datalist>
+            </div>
+            <div id="athlete-profile" class="mt-5 grid gap-4 sm:grid-cols-3"></div>
+          </div>
+
+          <div class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+            <p class="text-sm font-medium text-slate-300">État de forme</p>
+            <div class="mt-5 flex items-end justify-between">
+              <div>
+                <p id="form-score" class="text-5xl font-bold text-water-400">91</p>
+                <p class="mt-2 text-sm text-slate-400">Indice composite sur les 5 dernières manches</p>
+              </div>
+              <i class="fa-solid fa-bolt text-4xl text-amber-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <div id="stat-cards" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></div>
+
+        <div class="rounded-lg border border-slate-800 bg-panel/85 p-5 shadow-glow">
+          <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Saison 2026</p>
+              <h3 class="text-xl font-semibold">Évolution du score course</h3>
+            </div>
+            <p class="text-sm text-slate-400">Score pondéré: temps pur, pénalités, écart base, rang</p>
+          </div>
+          <div class="chart-box">
+            <canvas id="seasonChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-technique" class="tab-view hidden space-y-6 p-4 md:p-8">
+        <div class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+          <div class="grid gap-4 lg:grid-cols-4">
+            <div>
+              <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Période</label>
+              <select id="filter-period" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+                <option value="complete">Saison complète</option>
+                <option value="spring">Bloc printemps</option>
+                <option value="summer">Bloc été</option>
+                <option value="selection">Sélections équipe de France</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Type de bassin</label>
+              <select id="filter-basin" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+                <option value="all">Tous</option>
+                <option value="naturel">Naturel</option>
+                <option value="artificiel">Artificiel</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Type de porte</label>
+              <select id="filter-gate" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+                <option value="all">Stop + Descente</option>
+                <option value="stop">Stop</option>
+                <option value="descente">Descente</option>
+              </select>
+            </div>
+            <button id="apply-filters" class="mt-6 rounded-lg bg-water-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-water-400 lg:mt-auto">
+              <i class="fa-solid fa-filter mr-2"></i>Appliquer les filtres
+            </button>
+          </div>
+        </div>
+
+        <div class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <div class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+            <div class="mb-4">
+              <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Benchmark catégorie</p>
+              <h3 class="text-xl font-semibold">Profil technique vs Top 10</h3>
+            </div>
+            <div class="chart-box">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <p class="text-sm uppercase tracking-[0.18em] text-slate-500">Manches</p>
+                <h3 class="text-xl font-semibold">Historique détaillé</h3>
+              </div>
+              <span id="run-count" class="rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300">0 manches</span>
+            </div>
+            <div class="thin-scrollbar overflow-x-auto">
+              <table class="min-w-[820px] w-full border-separate border-spacing-y-2 text-left text-sm">
+                <thead class="text-xs uppercase tracking-[0.14em] text-slate-500">
+                  <tr>
+                    <th class="px-3 py-2">Date</th>
+                    <th class="px-3 py-2">Course</th>
+                    <th class="px-3 py-2">Manche</th>
+                    <th class="px-3 py-2">Temps Pur</th>
+                    <th class="px-3 py-2">Pénalités</th>
+                    <th class="px-3 py-2">Écart Base</th>
+                    <th class="px-3 py-2">Classement</th>
+                  </tr>
+                </thead>
+                <tbody id="runs-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-pronostics" class="tab-view hidden space-y-6 p-4 md:p-8">
+        <div class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p class="text-sm uppercase tracking-[0.18em] text-water-400">Bookmaker fun, sans argent</p>
+              <h3 class="mt-1 text-2xl font-bold">Favoris prochaine course</h3>
+              <p class="mt-2 max-w-3xl text-sm text-slate-400">Cotes fictives calculées à partir du score de forme, de la propreté aux portes et de l'historique sur bassin artificiel.</p>
+            </div>
+            <div class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-300">
+              <i class="fa-solid fa-location-dot mr-2 text-water-400"></i>Prague Troja, K1H Senior
+            </div>
+          </div>
+        </div>
+
+        <div id="odds-list" class="grid gap-4 lg:grid-cols-2"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // =========================================================================
+    // BACKEND .NET / API FFCK:
+    // Remplacer ce bloc par des réponses REST:
+    // GET /api/ffck/athletes
+    // GET /api/ffck/athletes/{id}/season-summary
+    // GET /api/ffck/athletes/{id}/runs?period=&basin=&gateType=
+    // GET /api/ffck/predictions/next-race
+    // =========================================================================
+    const mockApiPayload = {
+      athletes: [
+        {
+          id: 'lea-gauthier',
+          name: 'Léa Gauthier',
+          category: 'K1D Senior',
+          club: 'Pau Canoë-Kayak Club',
+          nation: 'FRA',
+          form: 91,
+          stats: {
+            avgBaseGap: '-0.42 s',
+            finalsRate: '78%',
+            touchRatio: '0.62',
+            missedGates: 1
+          },
+          profile: [88, 91, 84, 93],
+          top10Profile: [82, 86, 79, 88],
+          seasonScores: [
+            { label: 'N1 Épinal', score: 78 },
+            { label: 'Sélections Pau', score: 84 },
+            { label: 'Ivrea ICF', score: 81 },
+            { label: 'Bourg-Saint-Maurice', score: 89 },
+            { label: 'World Cup Prague', score: 93 },
+            { label: 'Finale Vaires', score: 91 }
+          ]
+        },
+        {
+          id: 'nolan-martin',
+          name: 'Nolan Martin',
+          category: 'K1H U23',
+          club: 'CK Val de l\'Indre',
+          nation: 'FRA',
+          form: 86,
+          stats: {
+            avgBaseGap: '+0.18 s',
+            finalsRate: '71%',
+            touchRatio: '0.78',
+            missedGates: 2
+          },
+          profile: [80, 94, 76, 89],
+          top10Profile: [78, 88, 81, 85],
+          seasonScores: [
+            { label: 'N1 Épinal', score: 73 },
+            { label: 'Sélections Pau', score: 80 },
+            { label: 'Augsburg Open', score: 84 },
+            { label: 'Bourg-Saint-Maurice', score: 82 },
+            { label: 'World Cup Prague', score: 88 },
+            { label: 'Finale Vaires', score: 86 }
+          ]
+        },
+        {
+          id: 'camille-rousseau',
+          name: 'Camille Rousseau',
+          category: 'C1D Senior',
+          club: 'Cesson Rennes CK',
+          nation: 'FRA',
+          form: 82,
+          stats: {
+            avgBaseGap: '+0.64 s',
+            finalsRate: '64%',
+            touchRatio: '0.91',
+            missedGates: 0
+          },
+          profile: [85, 79, 87, 78],
+          top10Profile: [83, 84, 82, 81],
+          seasonScores: [
+            { label: 'N1 Épinal', score: 76 },
+            { label: 'Sélections Pau', score: 79 },
+            { label: 'Ivrea ICF', score: 77 },
+            { label: 'Bourg-Saint-Maurice', score: 84 },
+            { label: 'World Cup Prague', score: 80 },
+            { label: 'Finale Vaires', score: 82 }
+          ]
+        }
+      ],
+      runs: [
+        { athleteId: 'lea-gauthier', date: '2026-03-15', race: 'N1 Épinal', run: 'Demi-finale', pureTime: '94.82', penalties: 0, baseGap: '-0.21', rank: 2, period: 'spring', basin: 'naturel', gateType: 'descente' },
+        { athleteId: 'lea-gauthier', date: '2026-04-06', race: 'Sélections Pau', run: 'Finale', pureTime: '98.41', penalties: 2, baseGap: '+0.36', rank: 3, period: 'selection', basin: 'artificiel', gateType: 'stop' },
+        { athleteId: 'lea-gauthier', date: '2026-05-10', race: 'Bourg-Saint-Maurice', run: 'Finale', pureTime: '101.03', penalties: 0, baseGap: '-0.74', rank: 1, period: 'summer', basin: 'naturel', gateType: 'descente' },
+        { athleteId: 'lea-gauthier', date: '2026-06-18', race: 'World Cup Prague', run: 'Qualification 2', pureTime: '95.18', penalties: 2, baseGap: '+0.08', rank: 5, period: 'summer', basin: 'artificiel', gateType: 'stop' },
+        { athleteId: 'lea-gauthier', date: '2026-07-02', race: 'Finale Vaires', run: 'Finale', pureTime: '96.24', penalties: 50, baseGap: '+51.12', rank: 18, period: 'summer', basin: 'artificiel', gateType: 'descente' },
+        { athleteId: 'nolan-martin', date: '2026-03-16', race: 'N1 Épinal', run: 'Finale', pureTime: '91.67', penalties: 2, baseGap: '+0.88', rank: 4, period: 'spring', basin: 'naturel', gateType: 'descente' },
+        { athleteId: 'nolan-martin', date: '2026-04-07', race: 'Sélections Pau', run: 'Finale', pureTime: '92.11', penalties: 0, baseGap: '-0.12', rank: 2, period: 'selection', basin: 'artificiel', gateType: 'stop' },
+        { athleteId: 'nolan-martin', date: '2026-06-19', race: 'World Cup Prague', run: 'Demi-finale', pureTime: '93.75', penalties: 4, baseGap: '+1.92', rank: 9, period: 'summer', basin: 'artificiel', gateType: 'stop' },
+        { athleteId: 'camille-rousseau', date: '2026-04-06', race: 'Sélections Pau', run: 'Demi-finale', pureTime: '107.44', penalties: 0, baseGap: '+0.41', rank: 6, period: 'selection', basin: 'artificiel', gateType: 'stop' },
+        { athleteId: 'camille-rousseau', date: '2026-05-11', race: 'Bourg-Saint-Maurice', run: 'Finale', pureTime: '110.19', penalties: 2, baseGap: '+0.95', rank: 4, period: 'summer', basin: 'naturel', gateType: 'descente' },
+        { athleteId: 'camille-rousseau', date: '2026-07-03', race: 'Finale Vaires', run: 'Finale', pureTime: '106.83', penalties: 0, baseGap: '-0.18', rank: 2, period: 'summer', basin: 'artificiel', gateType: 'descente' }
+      ],
+      predictions: [
+        { athlete: 'Nolan Martin', category: 'K1H U23', odds: 1.50, votes: 42, signal: 'Meilleur temps pur sur 3 des 5 dernières manches' },
+        { athlete: 'Théo Bernard', category: 'K1H Senior', odds: 2.10, votes: 28, signal: 'Très propre sur stops, 0 porte manquée cette saison' },
+        { athlete: 'Malo Kerbrat', category: 'K1H Senior', odds: 3.20, votes: 18, signal: 'Fort engagement, risque pénalité 2s élevé' },
+        { athlete: 'Hugo Delmas', category: 'K1H U23', odds: 5.80, votes: 12, signal: 'Outsider performant sur bassin artificiel' }
+      ]
+    };
+
+    let selectedAthlete = mockApiPayload.athletes[0];
+    let seasonChart;
+    let radarChart;
+
+    const chartGridColor = 'rgba(148, 163, 184, 0.18)';
+    const chartTickColor = '#94a3b8';
+
+    const elements = {
+      pageTitle: document.getElementById('page-title'),
+      search: document.getElementById('athlete-search'),
+      datalist: document.getElementById('athlete-list'),
+      profile: document.getElementById('athlete-profile'),
+      statCards: document.getElementById('stat-cards'),
+      formScore: document.getElementById('form-score'),
+      runsTable: document.getElementById('runs-table'),
+      runCount: document.getElementById('run-count'),
+      oddsList: document.getElementById('odds-list')
+    };
+
+    function init() {
+      hydrateAthleteSearch();
+      renderAthlete(selectedAthlete);
+      renderRuns();
+      renderPredictions();
+      bindNavigation();
+      bindFilters();
+      bindAthleteSearch();
+    }
+
+    function hydrateAthleteSearch() {
+      elements.datalist.innerHTML = mockApiPayload.athletes
+        .map(athlete => `<option value="${athlete.name}">${athlete.category} - ${athlete.club}</option>`)
+        .join('');
+      elements.search.value = selectedAthlete.name;
+    }
+
+    function bindAthleteSearch() {
+      elements.search.addEventListener('change', () => {
+        const match = mockApiPayload.athletes.find(athlete => athlete.name.toLowerCase() === elements.search.value.toLowerCase());
+        if (!match) return;
+        selectedAthlete = match;
+        renderAthlete(selectedAthlete);
+        renderRuns();
+      });
+    }
+
+    function bindNavigation() {
+      document.querySelectorAll('.nav-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const tab = button.dataset.tab;
+          document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+          document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+          document.querySelectorAll('.nav-btn').forEach(item => {
+            item.classList.remove('active', 'bg-slate-800', 'text-slate-100');
+            item.classList.add('text-slate-400');
+            item.querySelector('i').className = item.querySelector('i').className.replace('text-water-400', 'text-slate-400');
+          });
+          button.classList.add('active', 'bg-slate-800', 'text-slate-100');
+          button.classList.remove('text-slate-400');
+          button.querySelector('i').className = button.querySelector('i').className.replace('text-slate-400', 'text-water-400');
+
+          elements.pageTitle.textContent = {
+            dashboard: 'Dashboard Athlète',
+            technique: 'Analyse Technique & Filtres',
+            pronostics: 'Pronostics & Bookmaker Fun'
+          }[tab];
+
+          if (tab === 'technique') {
+            setTimeout(() => radarChart?.resize(), 50);
+          }
+        });
+      });
+    }
+
+    function bindFilters() {
+      document.getElementById('apply-filters').addEventListener('click', renderRuns);
+    }
+
+    function renderAthlete(athlete) {
+      elements.formScore.textContent = athlete.form;
+      elements.profile.innerHTML = [
+        { label: 'Catégorie', value: athlete.category, icon: 'fa-id-badge' },
+        { label: 'Club', value: athlete.club, icon: 'fa-flag' },
+        { label: 'Nation', value: athlete.nation, icon: 'fa-location-crosshairs' }
+      ].map(item => `
+        <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
+          <i class="fa-solid ${item.icon} text-water-400"></i>
+          <p class="mt-3 text-xs uppercase tracking-[0.14em] text-slate-500">${item.label}</p>
+          <p class="mt-1 font-semibold text-slate-100">${item.value}</p>
+        </div>
+      `).join('');
+
+      const statDefinitions = [
+        { label: 'Écart moyen au temps de base', value: athlete.stats.avgBaseGap, icon: 'fa-stopwatch', color: athlete.stats.avgBaseGap.startsWith('-') ? 'text-emerald-400' : 'text-slate-100', hint: 'Moyenne sur manches validées' },
+        { label: 'Finales atteintes', value: athlete.stats.finalsRate, icon: 'fa-trophy', color: 'text-water-400', hint: 'Ratio finales / départs' },
+        { label: 'Touches 2s par manche', value: athlete.stats.touchRatio, icon: 'fa-hand', color: 'text-orange-400', hint: 'Pénalités de contact' },
+        { label: '50 portes manquées', value: athlete.stats.missedGates, icon: 'fa-triangle-exclamation', color: athlete.stats.missedGates > 0 ? 'text-red-400' : 'text-emerald-400', hint: 'Saison en cours' }
+      ];
+
+      elements.statCards.innerHTML = statDefinitions.map(stat => `
+        <article class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm text-slate-400">${stat.label}</p>
+              <p class="mt-3 text-3xl font-bold ${stat.color}">${stat.value}</p>
+              <p class="mt-2 text-xs text-slate-500">${stat.hint}</p>
+            </div>
+            <div class="grid h-10 w-10 place-items-center rounded-lg bg-slate-950 text-slate-300 ring-1 ring-slate-800">
+              <i class="fa-solid ${stat.icon}"></i>
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      renderSeasonChart(athlete);
+      renderRadarChart(athlete);
+    }
+
+    function renderSeasonChart(athlete) {
+      const ctx = document.getElementById('seasonChart');
+      seasonChart?.destroy();
+      seasonChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: athlete.seasonScores.map(point => point.label),
+          datasets: [{
+            label: 'Score',
+            data: athlete.seasonScores.map(point => point.score),
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.16)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.38,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#0f172a',
+            pointBorderColor: '#38bdf8',
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#020617',
+              borderColor: '#334155',
+              borderWidth: 1,
+              titleColor: '#e2e8f0',
+              bodyColor: '#cbd5e1'
+            }
+          },
+          scales: {
+            y: {
+              min: 60,
+              max: 100,
+              grid: { color: chartGridColor },
+              ticks: { color: chartTickColor }
+            },
+            x: {
+              grid: { color: 'rgba(148, 163, 184, 0.08)' },
+              ticks: { color: chartTickColor, maxRotation: 0, autoSkip: true }
+            }
+          }
+        }
+      });
+    }
+
+    function renderRadarChart(athlete) {
+      const ctx = document.getElementById('radarChart');
+      radarChart?.destroy();
+      radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Régularité', 'Vitesse pure', 'Propreté', 'Engagement'],
+          datasets: [
+            {
+              label: athlete.name,
+              data: athlete.profile,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.20)',
+              pointBackgroundColor: '#38bdf8',
+              borderWidth: 2
+            },
+            {
+              label: `Moyenne Top 10 ${athlete.category}`,
+              data: athlete.top10Profile,
+              borderColor: '#a78bfa',
+              backgroundColor: 'rgba(167, 139, 250, 0.12)',
+              pointBackgroundColor: '#a78bfa',
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#cbd5e1', boxWidth: 12, boxHeight: 12 }
+            }
+          },
+          scales: {
+            r: {
+              min: 50,
+              max: 100,
+              angleLines: { color: chartGridColor },
+              grid: { color: chartGridColor },
+              pointLabels: { color: '#e2e8f0', font: { size: 12 } },
+              ticks: { color: chartTickColor, backdropColor: 'transparent', stepSize: 10 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderRuns() {
+      const period = document.getElementById('filter-period').value;
+      const basin = document.getElementById('filter-basin').value;
+      const gate = document.getElementById('filter-gate').value;
+
+      // BACKEND .NET / API FFCK:
+      // Remplacer ce filtrage local par:
+      // fetch(`/api/ffck/athletes/${selectedAthlete.id}/runs?period=${period}&basin=${basin}&gateType=${gate}`)
+      const rows = mockApiPayload.runs.filter(run => {
+        return run.athleteId === selectedAthlete.id
+          && (period === 'complete' || run.period === period)
+          && (basin === 'all' || run.basin === basin)
+          && (gate === 'all' || run.gateType === gate);
+      });
+
+      elements.runCount.textContent = `${rows.length} manche${rows.length > 1 ? 's' : ''}`;
+      elements.runsTable.innerHTML = rows.map(run => {
+        const penaltyClass = run.penalties >= 50 ? 'text-red-400 bg-red-500/10' : run.penalties > 0 ? 'text-orange-300 bg-orange-500/10' : 'text-emerald-300 bg-emerald-500/10';
+        const gapClass = run.baseGap.startsWith('-') ? 'text-emerald-300' : run.penalties >= 50 ? 'text-red-300' : 'text-slate-200';
+        return `
+          <tr class="bg-slate-950/70">
+            <td class="rounded-l-lg px-3 py-3 text-slate-300">${formatDate(run.date)}</td>
+            <td class="px-3 py-3 font-medium">${run.race}</td>
+            <td class="px-3 py-3 text-slate-300">${run.run}</td>
+            <td class="px-3 py-3 font-mono">${run.pureTime} s</td>
+            <td class="px-3 py-3">
+              <span class="rounded-md px-2 py-1 text-xs font-semibold ${penaltyClass}">${run.penalties} s</span>
+            </td>
+            <td class="px-3 py-3 font-mono ${gapClass}">${run.baseGap} s</td>
+            <td class="rounded-r-lg px-3 py-3">
+              <span class="rounded-md bg-slate-800 px-2 py-1 font-semibold">#${run.rank}</span>
+            </td>
+          </tr>
+        `;
+      }).join('') || `
+        <tr>
+          <td colspan="7" class="rounded-lg bg-slate-950/70 px-3 py-8 text-center text-slate-400">Aucune manche ne correspond aux filtres.</td>
+        </tr>
+      `;
+    }
+
+    function renderPredictions() {
+      // BACKEND .NET / API FFCK:
+      // Remplacer mockApiPayload.predictions par GET /api/ffck/predictions/next-race
+      elements.oddsList.innerHTML = mockApiPayload.predictions.map((pick, index) => `
+        <article class="rounded-lg border border-slate-800 bg-panel/85 p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-3">
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-950 text-sm font-bold text-water-400 ring-1 ring-slate-800">${index + 1}</span>
+                <div>
+                  <h4 class="text-lg font-semibold">${pick.athlete}</h4>
+                  <p class="text-sm text-slate-400">${pick.category}</p>
+                </div>
+              </div>
+              <p class="mt-4 text-sm text-slate-400">${pick.signal}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Cote</p>
+              <p class="mt-1 text-3xl font-black text-water-400">${pick.odds.toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <div class="mb-2 flex items-center justify-between text-sm">
+              <span class="text-slate-400">Votes communauté</span>
+              <span class="font-semibold">${pick.votes}%</span>
+            </div>
+            <div class="h-3 overflow-hidden rounded-full bg-slate-800">
+              <div class="h-full rounded-full bg-gradient-to-r from-water-600 to-emerald-400" style="width: ${pick.votes}%"></div>
+            </div>
+          </div>
+
+          <button class="virtual-bet mt-5 w-full rounded-lg border border-water-500/40 bg-water-500/10 px-4 py-3 text-sm font-semibold text-water-300 transition hover:bg-water-500 hover:text-slate-950" data-athlete="${pick.athlete}">
+            <i class="fa-solid fa-ticket mr-2"></i>Placer un pari virtuel
+          </button>
+        </article>
+      `).join('');
+
+      document.querySelectorAll('.virtual-bet').forEach(button => {
+        button.addEventListener('click', () => {
+          button.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Pari virtuel enregistré';
+          button.classList.remove('border-water-500/40', 'bg-water-500/10', 'text-water-300', 'hover:bg-water-500', 'hover:text-slate-950');
+          button.classList.add('border-emerald-500/40', 'bg-emerald-500/15', 'text-emerald-300');
+          button.disabled = true;
+        });
+      });
+    }
+
+    function formatDate(isoDate) {
+      return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(isoDate));
+    }
+
+    init();
+  </script>
+</body>
+</html>
