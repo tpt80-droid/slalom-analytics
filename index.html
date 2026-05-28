@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,27 +32,50 @@
     };
   </script>
   <style>
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       background:
         radial-gradient(circle at top right, rgba(14, 165, 233, 0.18), transparent 30%),
         linear-gradient(135deg, #020617 0%, #0f172a 48%, #111827 100%);
     }
-    .chart-box { height: 340px; }
-    @media (max-width: 768px) {
-      .chart-box { height: 290px; }
+
+    .chart-box {
+      height: 340px;
     }
-    .thin-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
-    .thin-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-    .thin-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+
+    @media (max-width: 768px) {
+      .chart-box {
+        height: 290px;
+      }
+    }
+
+    .thin-scrollbar::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+
+    .thin-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 999px;
+    }
+
+    .thin-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
   </style>
 </head>
+
 <body class="min-h-screen text-slate-100 antialiased">
   <div class="flex min-h-screen">
-    <aside class="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur md:sticky md:top-0 md:h-screen md:w-72 md:border-r md:border-t-0">
+    <aside
+      class="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur md:sticky md:top-0 md:h-screen md:w-72 md:border-r md:border-t-0">
       <div class="hidden p-6 md:block">
         <div class="flex items-center gap-3">
-          <div class="grid h-11 w-11 place-items-center rounded-lg bg-water-500/15 text-water-400 ring-1 ring-water-500/30">
+          <div
+            class="grid h-11 w-11 place-items-center rounded-lg bg-water-500/15 text-water-400 ring-1 ring-water-500/30">
             <i class="fa-solid fa-water text-xl"></i>
           </div>
           <div>
@@ -61,16 +85,23 @@
         </div>
       </div>
 
-      <nav class="grid grid-cols-3 gap-1 p-2 md:mt-4 md:grid-cols-1 md:gap-2 md:px-4" aria-label="Navigation principale">
-        <button class="nav-btn active flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800/80 md:justify-start" data-tab="dashboard">
+      <nav class="grid grid-cols-3 gap-1 p-2 md:mt-4 md:grid-cols-1 md:gap-2 md:px-4"
+        aria-label="Navigation principale">
+        <button
+          class="nav-btn active flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-800/80 md:justify-start"
+          data-tab="dashboard">
           <i class="fa-solid fa-gauge-high w-5 text-water-400"></i>
           <span class="hidden sm:inline">Dashboard</span>
         </button>
-        <button class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start" data-tab="technique">
+        <button
+          class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start"
+          data-tab="technique">
           <i class="fa-solid fa-sliders w-5 text-slate-400"></i>
           <span class="hidden sm:inline">Technique</span>
         </button>
-        <button class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start" data-tab="pronostics">
+        <button
+          class="nav-btn flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800/80 md:justify-start"
+          data-tab="pronostics">
           <i class="fa-solid fa-ranking-star w-5 text-slate-400"></i>
           <span class="hidden sm:inline">Pronostics</span>
         </button>
@@ -109,7 +140,9 @@
             <label for="athlete-search" class="text-sm font-medium text-slate-300">Sélecteur d'athlète</label>
             <div class="relative mt-3">
               <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-              <input id="athlete-search" list="athlete-list" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-11 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-water-500 focus:ring-2 focus:ring-water-500/20" placeholder="Rechercher un athlète, ex: Léa Gauthier" />
+              <input id="athlete-search" list="athlete-list"
+                class="w-full rounded-lg border border-slate-700 bg-slate-950 px-11 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-water-500 focus:ring-2 focus:ring-water-500/20"
+                placeholder="Rechercher un athlète, ex: Léa Gauthier" />
               <datalist id="athlete-list"></datalist>
             </div>
             <div id="athlete-profile" class="mt-5 grid gap-4 sm:grid-cols-3"></div>
@@ -148,7 +181,8 @@
           <div class="grid gap-4 lg:grid-cols-4">
             <div>
               <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Période</label>
-              <select id="filter-period" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+              <select id="filter-period"
+                class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
                 <option value="complete">Saison complète</option>
                 <option value="spring">Bloc printemps</option>
                 <option value="summer">Bloc été</option>
@@ -157,7 +191,8 @@
             </div>
             <div>
               <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Type de bassin</label>
-              <select id="filter-basin" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+              <select id="filter-basin"
+                class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
                 <option value="all">Tous</option>
                 <option value="naturel">Naturel</option>
                 <option value="artificiel">Artificiel</option>
@@ -165,13 +200,15 @@
             </div>
             <div>
               <label class="text-xs uppercase tracking-[0.16em] text-slate-500">Type de porte</label>
-              <select id="filter-gate" class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
+              <select id="filter-gate"
+                class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none focus:border-water-500">
                 <option value="all">Stop + Descente</option>
                 <option value="stop">Stop</option>
                 <option value="descente">Descente</option>
               </select>
             </div>
-            <button id="apply-filters" class="mt-6 rounded-lg bg-water-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-water-400 lg:mt-auto">
+            <button id="apply-filters"
+              class="mt-6 rounded-lg bg-water-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-water-400 lg:mt-auto">
               <i class="fa-solid fa-filter mr-2"></i>Appliquer les filtres
             </button>
           </div>
@@ -222,7 +259,8 @@
             <div>
               <p class="text-sm uppercase tracking-[0.18em] text-water-400">Bookmaker fun, sans argent</p>
               <h3 class="mt-1 text-2xl font-bold">Favoris prochaine course</h3>
-              <p class="mt-2 max-w-3xl text-sm text-slate-400">Cotes fictives calculées à partir du score de forme, de la propreté aux portes et de l'historique sur bassin artificiel.</p>
+              <p class="mt-2 max-w-3xl text-sm text-slate-400">Cotes fictives calculées à partir du score de forme, de
+                la propreté aux portes et de l'historique sur bassin artificiel.</p>
             </div>
             <div class="rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-300">
               <i class="fa-solid fa-location-dot mr-2 text-water-400"></i>Prague Troja, K1H Senior
@@ -339,6 +377,25 @@
         { athlete: 'Hugo Delmas', category: 'K1H U23', odds: 5.80, votes: 12, signal: 'Outsider performant sur bassin artificiel' }
       ]
     };
+
+    // Fonction pour charger une vraie course depuis la FFCK
+    async function chargerCourseFFCK(raceId) {
+      try {
+        const response = await fetch(`https://slalom.ffck.org/api/ffck/race/${raceId}`);
+        const data = await response.json();
+
+        console.log("Vraies données FFCK reçues :", data);
+
+        // C'est ici que tu lieras les données reçues (data.results) 
+        // aux fonctions graphiques du site (renderAthlete, etc.)
+
+      } catch (error) {
+        console.error("Impossible de charger la course FFCK :", error);
+      }
+    }
+
+    // Exemple d'appel pour la course d'Épinal au démarrage
+    // chargerCourseFFCK(20120935);
 
     let selectedAthlete = mockApiPayload.athletes[0];
     let seasonChart;
@@ -654,4 +711,5 @@
     init();
   </script>
 </body>
+
 </html>
