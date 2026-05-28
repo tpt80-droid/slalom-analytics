@@ -87,24 +87,27 @@
 
       <div class="px-3 pt-3 md:px-4 md:pt-0">
         <div class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
-          <label for="race-selector" class="text-xs uppercase tracking-[0.18em] text-slate-500">Course FFCK</label>
-          <select id="race-selector"
+          <label for="year-selector" class="text-xs uppercase tracking-[0.18em] text-slate-500">Saison FFCK</label>
+          <select id="year-selector"
             class="mt-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none focus:border-water-500">
-            <option value="20120935">Manche N1 - Épinal</option>
-            <option value="20120930">Sélections Olympiques</option>
-            <option value="20120940">N1 - Bourg Saint Maurice</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
           </select>
-          <div class="mt-3 flex gap-2">
-            <input id="manual-race-id" type="number" inputmode="numeric" min="1"
-              class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-water-500"
-              placeholder="ID course" />
-            <button id="load-manual-race"
-              class="rounded-lg bg-water-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-water-400"
-              title="Charger un ID manuel">
-              <i class="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-          <p class="mt-2 text-xs text-slate-500">Charger un ID manuel</p>
+
+          <label for="event-selector" class="mt-4 block text-xs uppercase tracking-[0.18em] text-slate-500">Événement</label>
+          <select id="event-selector"
+            class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none focus:border-water-500">
+            <option value="">Chargement du calendrier...</option>
+          </select>
+
+          <label for="race-selector" class="mt-4 block text-xs uppercase tracking-[0.18em] text-slate-500">Manche</label>
+          <select id="race-selector"
+            class="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none focus:border-water-500">
+            <option value="">Sélectionne un événement</option>
+          </select>
         </div>
       </div>
 
@@ -299,6 +302,7 @@
   </div>
 
   <script>
+    let currentEvents = [];
     let currentRaceResults = [];
     let currentRaceData = null;
     let selectedAthlete = null;
@@ -318,9 +322,9 @@
       runsTable: document.getElementById('runs-table'),
       runCount: document.getElementById('run-count'),
       oddsList: document.getElementById('odds-list'),
+      yearSelector: document.getElementById('year-selector'),
+      eventSelector: document.getElementById('event-selector'),
       raceSelector: document.getElementById('race-selector'),
-      manualRaceId: document.getElementById('manual-race-id'),
-      loadManualRace: document.getElementById('load-manual-race'),
       appMessage: document.getElementById('app-message'),
       apiStatus: document.getElementById('api-status')
     };
@@ -330,8 +334,88 @@
       bindFilters();
       bindAthleteSearch();
       bindRaceControls();
-      renderEmptyState('Chargement de la course FFCK...');
-      loadRace(elements.raceSelector?.value ?? '20120935');
+      renderEmptyState('Chargement du calendrier FFCK...');
+      loadCalendar(2026);
+    }
+
+    async function loadCalendar(year) {
+      const selectedYear = String(year ?? new Date().getFullYear()).trim();
+      setCalendarLoadingState(true, selectedYear);
+      hideMessage();
+
+      try {
+        const response = await fetch(`https://slalom.ffck.org/api/ffck/events?year=${encodeURIComponent(selectedYear)}`);
+        if (!response.ok) {
+          throw new Error(`Calendrier FFCK indisponible pour ${selectedYear} (HTTP ${response.status}).`);
+        }
+
+        const data = await response.json();
+        currentEvents = Array.isArray(data?.events) ? data.events : [];
+        currentEvents.sort((a, b) => new Date(b?.startDate ?? b?.date ?? 0) - new Date(a?.startDate ?? a?.date ?? 0));
+
+        if (!currentEvents.length) {
+          throw new Error(`Aucun événement FFCK trouvé pour ${selectedYear}.`);
+        }
+
+        populateEventSelector();
+        await populateRaceSelector(0, true);
+        showMessage('success', `${currentEvents.length} événements FFCK chargés pour ${selectedYear}.`);
+      } catch (error) {
+        currentEvents = [];
+        currentRaceResults = [];
+        currentRaceData = null;
+        selectedAthlete = null;
+        elements.eventSelector.innerHTML = '<option value="">Aucun événement disponible</option>';
+        elements.raceSelector.innerHTML = '<option value="">Aucune manche disponible</option>';
+        hydrateAthleteSearch();
+        renderEmptyState('Aucun calendrier FFCK disponible.');
+        renderRuns();
+        renderPredictions();
+        showMessage('error', error?.message ?? 'Impossible de charger le calendrier FFCK.');
+      } finally {
+        setCalendarLoadingState(false, selectedYear);
+      }
+    }
+
+    function populateEventSelector() {
+      elements.eventSelector.innerHTML = currentEvents.map((event, index) => {
+        const date = formatDate(event?.startDate ?? event?.date);
+        const level = event?.level ?? 'NC';
+        const place = event?.place ?? 'Lieu inconnu';
+        const name = event?.name ?? 'Événement inconnu';
+        return `<option value="${index}">[Niveau ${escapeHtml(level)}] ${escapeHtml(place)} - ${escapeHtml(name)} (${escapeHtml(date)})</option>`;
+      }).join('');
+      elements.eventSelector.value = '0';
+    }
+
+    async function populateRaceSelector(eventIndex, shouldLoadFirstRace = false) {
+      const index = Number(eventIndex ?? 0);
+      const event = currentEvents?.[index] ?? null;
+      const races = Array.isArray(event?.races) ? event.races : [];
+
+      if (!races.length) {
+        elements.raceSelector.innerHTML = '<option value="">Aucune manche pour cet événement</option>';
+        currentRaceResults = [];
+        currentRaceData = null;
+        selectedAthlete = null;
+        hydrateAthleteSearch();
+        renderEmptyState('Cet événement ne contient aucune manche exploitable.');
+        renderRuns();
+        renderPredictions();
+        showMessage('error', 'Cet événement FFCK ne contient aucune manche dans event.races.');
+        return;
+      }
+
+      elements.raceSelector.innerHTML = races.map(race => {
+        const raceName = race?.name ?? 'Manche inconnue';
+        const raceId = race?.id ?? '';
+        return `<option value="${escapeHtml(raceId)}">${escapeHtml(raceName)}</option>`;
+      }).join('');
+
+      elements.raceSelector.value = String(races?.[0]?.id ?? '');
+      if (shouldLoadFirstRace && races?.[0]?.id) {
+        await loadRace(races[0].id);
+      }
     }
 
     async function loadRace(raceId) {
@@ -383,22 +467,16 @@
     }
 
     function bindRaceControls() {
+      elements.yearSelector?.addEventListener('change', event => {
+        loadCalendar(event?.target?.value ?? 2026);
+      });
+
+      elements.eventSelector?.addEventListener('change', event => {
+        populateRaceSelector(event?.target?.value, true);
+      });
+
       elements.raceSelector?.addEventListener('change', event => {
         loadRace(event?.target?.value);
-      });
-
-      elements.loadManualRace?.addEventListener('click', () => {
-        const manualId = elements.manualRaceId?.value;
-        if (manualId) {
-          elements.raceSelector.value = '';
-          loadRace(manualId);
-        }
-      });
-
-      elements.manualRaceId?.addEventListener('keydown', event => {
-        if (event?.key === 'Enter') {
-          elements.loadManualRace?.click();
-        }
       });
     }
 
@@ -913,9 +991,18 @@
       elements.apiStatus.innerHTML = isLoading
         ? `<i class="fa-solid fa-circle-notch fa-spin mr-2 text-water-400"></i>Chargement FFCK #${escapeHtml(raceId)}`
         : `<i class="fa-solid fa-database mr-2 text-water-400"></i>API FFCK publique`;
+      elements.yearSelector.disabled = isLoading;
+      elements.eventSelector.disabled = isLoading;
       elements.raceSelector.disabled = isLoading;
-      elements.manualRaceId.disabled = isLoading;
-      elements.loadManualRace.disabled = isLoading;
+    }
+
+    function setCalendarLoadingState(isLoading, year) {
+      elements.apiStatus.innerHTML = isLoading
+        ? `<i class="fa-solid fa-circle-notch fa-spin mr-2 text-water-400"></i>Calendrier FFCK ${escapeHtml(year)}`
+        : `<i class="fa-solid fa-database mr-2 text-water-400"></i>API FFCK publique`;
+      elements.yearSelector.disabled = isLoading;
+      elements.eventSelector.disabled = isLoading;
+      elements.raceSelector.disabled = isLoading;
     }
 
     function formatDate(isoDate) {
